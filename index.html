@@ -98,7 +98,15 @@
     const obGeo = new THREE.BoxGeometry(1, 1, 1);
     const obMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
     const ob = new THREE.Mesh(obGeo, obMat);
-    ob.position.set(Math.random() * 16 - 8, 0.5, Math.random() * 16 - 8);
+
+    // Prevent obstacles from spawning too close to the avatar
+    let x, z;
+    do {
+      x = Math.random() * 16 - 8;
+      z = Math.random() * 16 - 8;
+    } while (Math.sqrt(x * x + z * z) < 3);
+
+    ob.position.set(x, 0.5, z);
     ob.userData.dir = Math.random() > 0.5 ? 1 : -1;
     scene.add(ob);
     obstacles.push(ob);
@@ -128,7 +136,6 @@
     }
   });
 
-  // Joystick control
   const joystick = document.getElementById("joystick");
   const stick = document.getElementById("stick");
   let joystickX = 0, joystickY = 0;
@@ -178,7 +185,6 @@
     avatarGroup.position.x += dx;
     avatarGroup.position.z += dz;
 
-    // Jumping physics
     if (isJumping) {
       avatarGroup.position.y += jumpVelocity;
       jumpVelocity -= 0.01;
