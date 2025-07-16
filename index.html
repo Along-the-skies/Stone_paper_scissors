@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>3D Escape Game</title>
@@ -54,85 +55,157 @@
 <div id="popup"></div>
 <div id="joystick"><div id="stick"></div></div>
 <button id="jumpBtn">⬆️</button>
+
 <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
 <script>
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);const light = new THREE.PointLight(0xffffff, 1); light.position.set(10, 15, 10); scene.add(light);
+  document.body.appendChild(renderer.domElement);
 
-const floorGeo = new THREE.PlaneGeometry(20, 20); const floorMat = new THREE.MeshStandardMaterial({ color: 0x444444 }); const floor = new THREE.Mesh(floorGeo, floorMat); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+  const light = new THREE.PointLight(0xffffff, 1);
+  light.position.set(10, 15, 10);
+  scene.add(light);
 
-const avatarGroup = new THREE.Group(); const bodyGeo = new THREE.BoxGeometry(0.8, 1, 0.5); const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5); const mat = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); const body = new THREE.Mesh(bodyGeo, mat); const head = new THREE.Mesh(headGeo, mat); body.position.y = 0.5; head.position.y = 1.25; avatarGroup.add(body); avatarGroup.add(head); scene.add(avatarGroup); avatarGroup.position.set(0, 0, 0);
+  const floorGeo = new THREE.PlaneGeometry(20, 20);
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  scene.add(floor);
 
-const exitGeo = new THREE.BoxGeometry(1, 1, 1); const exitMat = new THREE.MeshStandardMaterial({ color: 0x0000ff, emissive: 0x0000ff }); const exit = new THREE.Mesh(exitGeo, exitMat); exit.position.set(8, 0.5, 8); scene.add(exit);
+  const avatarGroup = new THREE.Group();
+  const bodyGeo = new THREE.BoxGeometry(0.8, 1, 0.5);
+  const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+  const mat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+  const body = new THREE.Mesh(bodyGeo, mat);
+  const head = new THREE.Mesh(headGeo, mat);
+  body.position.y = 0.5;
+  head.position.y = 1.25;
+  avatarGroup.add(body);
+  avatarGroup.add(head);
+  scene.add(avatarGroup);
+  avatarGroup.position.set(0, 0, 0);
 
-const obstacles = []; for (let i = 0; i < 5; i++) { const obGeo = new THREE.BoxGeometry(1, 1, 1); const obMat = new THREE.MeshStandardMaterial({ color: 0xff0000 }); const ob = new THREE.Mesh(obGeo, obMat); ob.position.set(Math.random() * 16 - 8, 0.5, Math.random() * 16 - 8); ob.userData.dir = Math.random() > 0.5 ? 1 : -1; scene.add(ob); obstacles.push(ob); }
+  const exitGeo = new THREE.BoxGeometry(1, 1, 1);
+  const exitMat = new THREE.MeshStandardMaterial({ color: 0x0000ff, emissive: 0x0000ff });
+  const exit = new THREE.Mesh(exitGeo, exitMat);
+  exit.position.set(8, 0.5, 8);
+  scene.add(exit);
 
-camera.position.set(0, 5, -5); camera.lookAt(avatarGroup.position);
-
-const keys = {}; document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true); document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-
-let gameOver = false; const popup = document.getElementById("popup"); function showPopup(text) { popup.innerText = text; popup.style.display = 'block'; gameOver = true; }
-
-// Jump let isJumping = false; let jumpVelocity = 0;
-
-document.getElementById("jumpBtn").addEventListener("click", () => { if (!isJumping) { isJumping = true; jumpVelocity = 0.2; } });
-
-// Joystick control const joystick = document.getElementById("joystick"); const stick = document.getElementById("stick"); let joystickX = 0, joystickY = 0; let dragging = false;
-
-joystick.addEventListener("touchstart", e => { dragging = true; });
-
-joystick.addEventListener("touchmove", e => { const touch = e.touches[0]; const rect = joystick.getBoundingClientRect(); let dx = touch.clientX - rect.left - 50; let dy = touch.clientY - rect.top - 50; const dist = Math.sqrt(dxdx + dydy); if (dist > 40) { dx *= 40 / dist; dy *= 40 / dist; } stick.style.transform = translate(${dx}px, ${dy}px); joystickX = dx / 40; joystickY = dy / 40; });
-
-joystick.addEventListener("touchend", () => { stick.style.transform = translate(0px, 0px); joystickX = 0; joystickY = 0; dragging = false; });
-
-function animate() { requestAnimationFrame(animate); if (gameOver) return;
-
-const speed = 0.1;
-let dx = 0, dz = 0;
-
-if (keys['arrowup'] || keys['w']) dz -= speed;
-if (keys['arrowdown'] || keys['s']) dz += speed;
-if (keys['arrowleft'] || keys['a']) dx -= speed;
-if (keys['arrowright'] || keys['d']) dx += speed;
-
-dx += joystickX * speed;
-dz += joystickY * speed;
-
-avatarGroup.position.x += dx;
-avatarGroup.position.z += dz;
-
-// Jumping physics
-if (isJumping) {
-  avatarGroup.position.y += jumpVelocity;
-  jumpVelocity -= 0.01;
-  if (avatarGroup.position.y <= 0) {
-    avatarGroup.position.y = 0;
-    isJumping = false;
+  const obstacles = [];
+  for (let i = 0; i < 5; i++) {
+    const obGeo = new THREE.BoxGeometry(1, 1, 1);
+    const obMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    const ob = new THREE.Mesh(obGeo, obMat);
+    ob.position.set(Math.random() * 16 - 8, 0.5, Math.random() * 16 - 8);
+    ob.userData.dir = Math.random() > 0.5 ? 1 : -1;
+    scene.add(ob);
+    obstacles.push(ob);
   }
-}
 
-for (let ob of obstacles) {
-  ob.position.x += 0.05 * ob.userData.dir;
-  if (ob.position.x > 9 || ob.position.x < -9) ob.userData.dir *= -1;
-  if (ob.position.distanceTo(avatarGroup.position) < 0.75) showPopup("You Died!");
-}
+  camera.position.set(0, 5, -5);
+  camera.lookAt(avatarGroup.position);
 
-if (avatarGroup.position.distanceTo(exit.position) < 1) {
-  showPopup("🎉 Congratulations! You Escaped!");
-}
+  const keys = {};
+  document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+  document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-camera.position.x = avatarGroup.position.x;
-camera.position.z = avatarGroup.position.z - 5;
-camera.lookAt(avatarGroup.position);
+  let gameOver = false;
+  const popup = document.getElementById("popup");
+  function showPopup(text) {
+    popup.innerText = text;
+    popup.style.display = 'block';
+    gameOver = true;
+  }
 
-renderer.render(scene, camera);
+  let isJumping = false;
+  let jumpVelocity = 0;
+  document.getElementById("jumpBtn").addEventListener("click", () => {
+    if (!isJumping) {
+      isJumping = true;
+      jumpVelocity = 0.2;
+    }
+  });
 
-}
+  // Joystick control
+  const joystick = document.getElementById("joystick");
+  const stick = document.getElementById("stick");
+  let joystickX = 0, joystickY = 0;
+  let dragging = false;
 
-animate(); </script>
+  joystick.addEventListener("touchstart", e => {
+    dragging = true;
+  });
 
+  joystick.addEventListener("touchmove", e => {
+    const touch = e.touches[0];
+    const rect = joystick.getBoundingClientRect();
+    let dx = touch.clientX - rect.left - 50;
+    let dy = touch.clientY - rect.top - 50;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 40) {
+      dx *= 40 / dist;
+      dy *= 40 / dist;
+    }
+    stick.style.transform = `translate(${dx}px, ${dy}px)`;
+    joystickX = dx / 40;
+    joystickY = dy / 40;
+  });
+
+  joystick.addEventListener("touchend", () => {
+    stick.style.transform = `translate(0px, 0px)`;
+    joystickX = 0;
+    joystickY = 0;
+    dragging = false;
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+    if (gameOver) return;
+
+    const speed = 0.1;
+    let dx = 0, dz = 0;
+
+    if (keys['arrowup'] || keys['w']) dz -= speed;
+    if (keys['arrowdown'] || keys['s']) dz += speed;
+    if (keys['arrowleft'] || keys['a']) dx -= speed;
+    if (keys['arrowright'] || keys['d']) dx += speed;
+
+    dx += joystickX * speed;
+    dz += joystickY * speed;
+
+    avatarGroup.position.x += dx;
+    avatarGroup.position.z += dz;
+
+    // Jumping physics
+    if (isJumping) {
+      avatarGroup.position.y += jumpVelocity;
+      jumpVelocity -= 0.01;
+      if (avatarGroup.position.y <= 0) {
+        avatarGroup.position.y = 0;
+        isJumping = false;
+      }
+    }
+
+    for (let ob of obstacles) {
+      ob.position.x += 0.05 * ob.userData.dir;
+      if (ob.position.x > 9 || ob.position.x < -9) ob.userData.dir *= -1;
+      if (ob.position.distanceTo(avatarGroup.position) < 0.75) showPopup("💀 You Died!");
+    }
+
+    if (avatarGroup.position.distanceTo(exit.position) < 1) {
+      showPopup("🎉 Congratulations! You Escaped!");
+    }
+
+    camera.position.x = avatarGroup.position.x;
+    camera.position.z = avatarGroup.position.z - 5;
+    camera.lookAt(avatarGroup.position);
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+</script>
 </body>
-  </html>
+</html>
